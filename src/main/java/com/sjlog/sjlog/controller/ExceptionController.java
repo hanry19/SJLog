@@ -17,12 +17,15 @@ import java.util.Map;
 @ControllerAdvice
 public class ExceptionController {
 
+    @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseBody
     public ErrorResponse MethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
 
-        ErrorResponse response = new ErrorResponse("400", "잘못된 요청입니다.");
+        ErrorResponse response = ErrorResponse.builder()
+                .code("400")
+                .message("잘못된 요청입니다.")
+                .build();
 
         for (FieldError fieldError : e.getFieldErrors()) {
             response.addValidation(fieldError.getField(), fieldError.getDefaultMessage());
