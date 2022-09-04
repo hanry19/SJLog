@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sjlog.sjlog.domain.Post;
 import com.sjlog.sjlog.repository.PostRepository;
 import com.sjlog.sjlog.request.PostCreate;
+import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +21,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,15 +60,13 @@ class PostControllerTest {
 
         String json = objectMapper.writeValueAsString(request);
 
-        System.out.println("json = " + json);
 
         //expected
-        mockMvc.perform(MockMvcRequestBuilders.post("/posts")
+        mockMvc.perform(post("/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string("{}"))
                 .andDo(print());
 
         // test 실행 시 db에 하나가 등록이 됨
@@ -84,7 +87,7 @@ class PostControllerTest {
         System.out.println("json = " + json);
 
         //expected
-        mockMvc.perform(MockMvcRequestBuilders.post("/posts")
+        mockMvc.perform(post("/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json)
                 )
@@ -108,7 +111,7 @@ class PostControllerTest {
 
 
         //when
-        mockMvc.perform(MockMvcRequestBuilders.post("/posts")
+        mockMvc.perform(post("/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json)
                 )
@@ -124,6 +127,63 @@ class PostControllerTest {
 
     }
 
+    @Test
+    @DisplayName("글 1개 조회 ")
+    void test4() throws Exception {
+        //given
+        Post post = Post.builder()
+                .title("12345678901234")
+                .content("hello")
+                .build();
+        postRepository.save(post);
 
+        // expected
+        mockMvc.perform(get("/posts/{postId}",post.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(post.getId()))
+                .andExpect(jsonPath("$.title").value("1234567890"))
+                .andExpect(jsonPath("$.content").value("hello"))
+                .andDo(print());
+
+
+    }
+
+    @Test
+    @DisplayName("글 여러개 조회 ")
+    void test5() throws Exception {
+        //given
+        Post post1 = Post.builder()
+                .title("1234")
+                .content("hello")
+                .build();
+        postRepository.save(post1);
+
+        Post post2 = Post.builder()
+                .title("12")
+                .content("hi")
+                .build();
+        postRepository.save(post2);
+
+        // expected
+        mockMvc.perform(get("/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                /**
+                 *  1건 조회 할 떄는 json형태로 넘어오지만 전체 조회 할 땐 list로 넘어옴 [{}, {}....] 그래서
+                 * */
+                .andExpect(jsonPath("$.length()", Matchers.is(2)))
+                .andExpect(jsonPath("$[0].id").value(post1.getId()))
+                .andExpect(jsonPath("$[0].title").value("1234"))
+                .andExpect(jsonPath("$[0].content").value("hello"))
+                .andExpect(jsonPath("$[1].id").value(post2.getId()))
+                .andExpect(jsonPath("$[1].title").value("12"))
+                .andExpect(jsonPath("$[1].content").value("hi"))
+                .andDo(print());
+
+
+    }
 }
 

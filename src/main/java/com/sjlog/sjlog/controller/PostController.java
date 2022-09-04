@@ -2,12 +2,14 @@ package com.sjlog.sjlog.controller;
 
 import com.sjlog.sjlog.domain.Post;
 import com.sjlog.sjlog.request.PostCreate;
+import com.sjlog.sjlog.response.PostResponse;
 import com.sjlog.sjlog.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -43,12 +45,23 @@ public class PostController {
 
 */
 
-@PostMapping("/posts")
-public Map post(@RequestBody @Valid PostCreate request)  {
-    Long postId = postService.write(request);
+    // 글 등록
+    @PostMapping("/posts")
+    public void post(@RequestBody @Valid PostCreate request) {
 
-    return Map.of("postId", postId);
-}
+        postService.write(request);
+    }
 
+    // 단건 조회
+    @GetMapping("/posts/{postId}")
+    public PostResponse get(@PathVariable Long postId) {
 
+        return postService.get(postId);
+    }
+
+    // 여러 건 조회
+    @GetMapping("/posts")
+    public List<PostResponse> getList() {
+        return postService.getList();
+    }
 }
